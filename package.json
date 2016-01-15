@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "h2o2": "^5.0.0",
-    "hapi": "^12.1.0"
+    "hapi": "^12.1.0",
+    "request-promise": "^2.0.0"
   }
 }

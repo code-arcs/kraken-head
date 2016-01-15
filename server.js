@@ -2,6 +2,8 @@
 
 const Hapi = require('hapi');
 
+var StatusService = require('./services/statusService');
+
 const server = new Hapi.Server();
 server.connection({
     host: '0.0.0.0',
@@ -19,6 +21,14 @@ server.register({
 server.register(require('./plugin/registerNewTentacle.js'), (err) => {
     if (err) {
         console.error('Failed to load plugin:', err);
+    }
+});
+
+server.route({
+    method: 'GET',
+    path: '/status',
+    handler: function (request, reply) {
+        reply(StatusService.getAllTentacles());
     }
 });
 

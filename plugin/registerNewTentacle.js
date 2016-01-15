@@ -1,19 +1,22 @@
 'use strict';
 
+var StatusService = require('../services/statusService');
+
 exports.register = function (server, options, next) {
+
     server.route({
         method: 'POST',
         path: '/register',
         handler: function (request, reply) {
             const payload = request.payload;
-
             if(isRegistered(payload.prefix)){
                 reply('Is already registered');
             } else {
                 addNewRoute(payload);
+                StatusService.setNewTentacle(payload);
                 reply('registration successful');
             }
-        }
+        } 
     });
 
     next();
