@@ -3,19 +3,25 @@
 var StatusService = require('../services/statusService');
 
 exports.register = function (server, options, next) {
-    var routes = {};
+    var registeredProxies = new Map();
 
     server.route({
         method: 'POST',
         path: '/register',
         handler: function (request, reply) {
             const payload = request.payload;
-            if (isRegistered(payload.prefix)) {
-                reply('Is already registered');
+
+            if(registerPayloadIsValid(payload)) {
+                if (isRegistered(payload.prefix)) {
+                    reply('Is already registered');
+                } else {
+                    addNewProxy(payload);
+                    StatusService.setNewTentacle(payload);
+                    console.log(`A new service with prefix ${payload.prefix} has been added!`);
+                    reply('Service has been registered!');
+                }
             } else {
-                addNewRoute(payload);
-                StatusService.setNewTentacle(payload);
-                reply('registration successful');
+                reply('Your data is wrong and you should feel wrong!').code(403);
             }
         }
     });
@@ -25,9 +31,16 @@ exports.register = function (server, options, next) {
         path: '/unregister',
         handler: function (request, reply) {
             const payload = request.payload;
-            if (isRegistered(payload.prefix)) {
-                delete routes[prefix.split('/')[1]];
-                reply('unregistered service');
+            if(unregisterPayloadIsValid(payload)) {
+                if(registeredProxies.delete(payload.prefix.split('/')[1])) {
+                    console.log(`Service with prefix ${payload.prefix} has been removed!`);
+                    reply('Service has been unregistered!');
+                } else {
+                    console.log(`Service with prefix ${payload.prefix} could not be removed!`);
+                    reply('Error removing service!');
+                }
+            } else {
+                reply('Your data is wrong and you should feel wrong!').code(403);
             }
         }
     });
@@ -36,8 +49,7 @@ exports.register = function (server, options, next) {
         method: ['*', 'GET'],
         path: '/{service}/{params?}',
         handler: function (request, reply) {
-            var proxyInfo = routes[request.params.service];
-
+            var proxyInfo = registeredProxies.get(request.params.service);
             if (proxyInfo) {
                 return reply.proxy(proxyInfo);
             } else {
@@ -49,16 +61,27 @@ exports.register = function (server, options, next) {
     next();
 
     function isRegistered(prefix) {
-        return !!routes[prefix.split('/')[1]];
+        var key = prefix.split('/')[1];
+        return registeredProxies.has(key);
     }
 
-    function addNewRoute(payload) {
-        routes[payload.prefix.split('/')[1]] = {
+    function addNewProxy(payload) {
+        var proxyInfo = {
             host: payload.host,
             port: payload.port,
             protocol: 'http'
         };
+        registeredProxies.set(payload.prefix.split('/')[1], proxyInfo);
+    }
 
+    function registerPayloadIsValid(payload) {
+        return payload.hasOwnProperty('host') &&
+            payload.hasOwnProperty('port') &&
+            payload.hasOwnProperty('prefix');
+    }
+
+    function unregisterPayloadIsValid(payload) {
+        return payload.hasOwnProperty('prefix');
     }
 };
 
