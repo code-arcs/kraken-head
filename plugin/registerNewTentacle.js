@@ -3,8 +3,8 @@
 var StatusService = require('../services/statusService');
 
 exports.register = function (server, options, next) {
-
-    server.route({
+    const api = server.select('api');
+    api.route({
         method: 'POST',
         path: '/register',
         handler: function (request, reply) {
@@ -22,14 +22,13 @@ exports.register = function (server, options, next) {
     next();
 
     function isRegistered(prefix){
-        return server.table()[0].table.filter(function (route) {
+        return api.table()[0].table.filter(function (route) {
             return route.path === prefix + '/{param*}';
         }).length > 0;
-
     }
 
     function addNewRoute(payload) {
-        server.route({
+        api.route({
             method: ['*', 'GET'],
             path: payload.prefix + '/{param*}',
             handler: function (request, reply) {
