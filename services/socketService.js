@@ -1,4 +1,4 @@
-const StatusService = require('statusService');
+const StatusService = require('./statusService');
 
 exports = module.exports = handler;
 
